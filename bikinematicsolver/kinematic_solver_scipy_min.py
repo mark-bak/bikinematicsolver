@@ -5,7 +5,7 @@ import scipy as sp
 from scipy.optimize import minimize
 
 #pylint: disable = import-error
-from dtypes import Pos_Result
+from bikinematicsolver.dtypes import Pos_Result
 
 class Kinematic_Solver_Scipy_Min():
     def __init__(self,points,links,kin_loop_points,end_eff_points):

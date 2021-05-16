@@ -8,9 +8,9 @@ from collections import namedtuple
 
 #Solver imports
 #pylint: disable = import-error
-from Solver.kinematic_solver_scipy_min import Kinematic_Solver_Scipy_Min
-from Solver.dtypes import Pos_Result,Link,Point
-import Solver.geometry as g
+from bikinematicsolver.kinematic_solver_scipy_min import Kinematic_Solver_Scipy_Min
+from bikinematicsolver.dtypes import Pos_Result,Link,Point
+import bikinematicsolver.geometry as g
 
 class Bike():
     def __init__(self,data):
