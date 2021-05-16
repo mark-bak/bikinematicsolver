@@ -13,7 +13,7 @@ setup(
     description = DESCRIPTION,
     long_description = LONG_DESCRIPTION,
     packages = find_packages(),
-    install_requires=['csv','dijkstar','numpy','scipy','collections'],
+    install_requires=['dijkstar','numpy','scipy'],
 
     keywords = [],
     classifiers = []
