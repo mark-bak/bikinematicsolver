@@ -1,0 +1,11 @@
+setup.py
+bikinematicsolver/__init__.py
+bikinematicsolver/bike.Py
+bikinematicsolver/dtypes.py
+bikinematicsolver/geometry.py
+bikinematicsolver/kinematic_solver_scipy_min.py
+bikinematicsolver.egg-info/PKG-INFO
+bikinematicsolver.egg-info/SOURCES.txt
+bikinematicsolver.egg-info/dependency_links.txt
+bikinematicsolver.egg-info/requires.txt
+bikinematicsolver.egg-info/top_level.txt
