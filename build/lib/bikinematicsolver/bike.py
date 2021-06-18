@@ -15,28 +15,27 @@ import bikinematicsolver.geometry as g
 class Bike():
     def __init__(self,data):
         
-        #RBike geo
+        #Input bike geo
         self.points = {}
         self.links = {}
         self.shock = None
+        self.params = data['params']
+        self.parse_input_data(data)
+
+        #Derived bike geo
         self.kinematic_loop_points = []
         self.end_eff_points = []
         self.static_points = []
         self.chainline = []
-        self.params = {}
-        
-        self.kinematic_solver = None #Added later in set_kinematic_solver
 
-        self.solution = {}
-
-        #Initialise internal variables
-        self.parse_input_data(data)
         self.find_kinematic_loop()
         self.find_static_points()
         self.find_end_eff_points()
         teeth = (self.load_param('chainring_teeth'),
                  self.load_param('cassette_teeth'))
         self.find_chainline(teeth)
+           
+        self.kinematic_solver = None #Added later in set_kinematic_solver
 
         #Currently adds a solver that uses Scipy minimisation fcns to numerically solve
         #linkage constraint eqns, however more solvers will likely need to be created for
@@ -46,6 +45,10 @@ class Bike():
                                                     self.kinematic_loop_points,
                                                     self.end_eff_points)
         self.set_kinematic_solver(default_Solver)
+
+        #Output data
+        self.solution = {}
+
 
     def load_param(self,param_name):
         try:
@@ -61,28 +64,20 @@ class Bike():
         link data represented as nametdtuples
         """  
 
-        for name in data:
-            if data[name]['object']=="Point":
-                P = Point(name,data[name]['type'],np.array(data[name]['position']))
-                self.points[name] = P
-        for name in data: # needs new loop as all points must be created before links
-            if data[name]['object']=="Link" or data[name]['object']=="Shock":
-                a_name = data[name]['a']
-                b_name = data[name]['b']
-                for point_name,point in self.points.items():
-                    if a_name == point_name:
-                        a = point
-                    if b_name == point_name:
-                        b = point
-                length = np.linalg.norm([b.pos-a.pos])
-                L = Link(a,b,length)
-                if data[name]['object']=="Link":
-                    self.links[name] = L
-                if data[name]['object']=="Shock":
-                    self.shock = L
-        for name in data:
-            if data[name]['object'] == "Parameter":
-                self.params[name] = data[name]['value']
+        for point_name,point in data['points'].items():
+            self.points[point_name] = Point(**point)
+            pass            
+
+
+        for link_name,link in data['links'].items():
+            a = self.points[link['a']] 
+            b = self.points[link['b']]
+            length = np.linalg.norm([np.array(b.pos)-np.array(a.pos)])
+            L = Link(a,b,length)
+            if link_name == data['shock']:
+                self.shock = L
+            else:
+                self.links[link_name] = L
 
     def find_kinematic_loop(self):
         """
@@ -183,6 +178,8 @@ class Bike():
         Calculates derived suspension characteristics such as leverage ratio, from a solution result, sol_name.
 
         Directly modifies self.solution[sol_name]
+
+        pretty grim functon - needs a refactor tbh
         """
         sol = self.solution[sol_name]
         size = np.size(list(sol.values())[0].x) 
@@ -197,7 +194,7 @@ class Bike():
             #If single pivot - Ic is constant
             Instant_Centre = self.populate_static_point(sol,size,self.kinematic_loop_points[0])
         else:
-            #4-bar soln
+            #n-bar soln
             a1 = sol[ self.kinematic_loop_points[0] ]
             a2 = sol[ self.kinematic_loop_points[1] ]
             b1 = sol[ self.kinematic_loop_points[-2] ]

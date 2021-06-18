@@ -22,6 +22,13 @@ def find_intersection(a1,a2,b1,b2):
     return ic
 
 def tangent_eqn(cen,r1,r2):
+    """
+    Finds equation of line in form ax + by = c, that is tangent to two circles. The first circle is at the origin, and the other is at an arbitrary point
+
+    cen: centrepoint of offset circle (or vector between the centres of both circles)
+    r1: radius of first circle
+    r2: radius of second circle
+    """
     delta_r = r2-r1
     z = np.add( np.power(cen[0],2) , np.power(cen[1],2))
     d = np.sqrt( np.subtract( z , np.power(delta_r,2) ) )
@@ -33,6 +40,9 @@ def tangent_eqn(cen,r1,r2):
     return ret
 
 def find_common_circle_tangent(cen1,r1,cen2,r2):
+    """
+    Finds all the tangent lines between two circles in form ax + by = c
+    """
     tan_lines = []
     for i in [-1,1]:
         for j in [-1,1]: 
@@ -60,22 +70,24 @@ def find_circle_tangent_intersection(cen,tangent_line):
     return ic
 
 def find_upper_tangent_points(t_lines,cen1,cen2):
-        
-        p1 =[]
-        p2 = []
+    """
+    Given a set of circles and their appropriate tangent lines (ax + by = c format) this finds the intersection points between the 'upper' tangent line and the circles - this is the chainline on a bike
+    """
+    p1 =[]
+    p2 = []
 
-        for line in t_lines:
-            p1.append(find_circle_tangent_intersection(cen1,line))
-            p2.append(find_circle_tangent_intersection(cen2,line))
+    for line in t_lines:
+        p1.append(find_circle_tangent_intersection(cen1,line))
+        p2.append(find_circle_tangent_intersection(cen2,line))
 
-        positive_inds_1 = [p1.index(point) for point in p1
-                           if point.y-cen1[1] > 0]
-        positive_inds_2 = [p2.index(point) for point in p2
-                           if point.y-cen2[1] > 0]
+    positive_inds_1 = [p1.index(point) for point in p1
+                        if point.y-cen1[1] > 0]
+    positive_inds_2 = [p2.index(point) for point in p2
+                        if point.y-cen2[1] > 0]
 
-        ind = [i for i in positive_inds_1 if i in positive_inds_2]
-        if ind:
-            ind = ind[0]
-            return [p1[ind],p2[ind]]
-        else:
-            return [Pos_Result(0,0),Pos_Result(0,0)]
+    ind = [i for i in positive_inds_1 if i in positive_inds_2]
+    if ind:
+        ind = ind[0]
+        return [p1[ind],p2[ind]]
+    else:
+        return [Pos_Result(0,0),Pos_Result(0,0)]
