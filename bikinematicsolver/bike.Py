@@ -65,12 +65,14 @@ class Bike():
         """  
 
         for point_name,point in data['points'].items():
-            self.points[point_name] = Point(point)
+            self.points[point_name] = Point(**point)
+            pass            
+
 
         for link_name,link in data['links'].items():
             a = self.points[link['a']] 
             b = self.points[link['b']]
-            length = np.linalg.norm([b.pos-a.pos])
+            length = np.linalg.norm([np.array(b.pos)-np.array(a.pos)])
             L = Link(a,b,length)
             if link_name == data['shock']:
                 self.shock = L
