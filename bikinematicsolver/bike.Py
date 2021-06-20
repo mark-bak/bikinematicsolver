@@ -1,13 +1,13 @@
 #Library imports
 import csv
-from dijkstar import Graph, find_path
-import numpy as np
-import scipy as sp
-from scipy.optimize import minimize
+
+from dijkstar import Graph, find_path #type: ignore
+import numpy as np #type: ignore
+import scipy as sp #type: ignore
+from scipy.optimize import minimize #type: ignore
 from collections import namedtuple
 
 #Solver imports
-#pylint: disable = import-error
 from bikinematicsolver.kinematic_solver_scipy_min import Kinematic_Solver_Scipy_Min
 from bikinematicsolver.dtypes import Pos_Result,Link,Point
 import bikinematicsolver.geometry as g
@@ -20,7 +20,7 @@ class Bike():
         self.links = {}
         self.shock = None
         self.params = data['params']
-        self.parse_input_data(data)
+        self._parse_input_data(data)
 
         #Derived bike geo
         self.kinematic_loop_points = []
@@ -49,7 +49,6 @@ class Bike():
         #Output data
         self.solution = {}
 
-
     def load_param(self,param_name):
         try:
             ret = self.params[param_name]
@@ -58,26 +57,26 @@ class Bike():
         return ret
 
     ##Functions to process input data
-    def parse_input_data(self,data):
+    def _parse_input_data(self,data):
         """
         This fcn takes input data, and populates the self.points{} and self.links{} dictionaries with point and
         link data represented as nametdtuples
         """  
 
         for point_name,point in data['points'].items():
-            self.points[point_name] = Point(**point)
-            pass            
-
+            self.points[point_name] = Point(**point)           
 
         for link_name,link in data['links'].items():
-            a = self.points[link['a']] 
-            b = self.points[link['b']]
-            length = np.linalg.norm([np.array(b.pos)-np.array(a.pos)])
-            L = Link(a,b,length)
+            L = Link(link['a'],link['b'])
             if link_name == data['shock']:
                 self.shock = L
             else:
                 self.links[link_name] = L
+
+    def update_point_pos(self,point_name,new_pos):
+        self.points[point_name].pos = new_pos
+        self.kinematic_solver.update_point_pos(point_name,new_pos)
+        pass
 
     def find_kinematic_loop(self):
         """
@@ -95,7 +94,7 @@ class Bike():
         for name in self.points: # add nodes
             g.add_node(name)
         for name,link in self.links.items(): # add links
-            g.add_edge(link.a.name,link.b.name,1)
+            g.add_edge(link.a,link.b,1)
         
         path = None
         #Loop between grounds, and find the ones connected by links
@@ -218,8 +217,8 @@ class Bike():
         ##Shock Length and Leverage Ratio
         if self.shock is not None:
             #Find shock point names
-            s_a_name = self.shock.a.name
-            s_b_name = self.shock.b.name
+            s_a_name = self.shock.a
+            s_b_name = self.shock.b
             Shock_Length = self.calc_distance(sol[s_a_name] , sol[s_b_name])
             Leverage_Ratio = self.calc_derivative(Vertical_Travel,Shock_Length)
             #Add to solution

@@ -1,8 +1,8 @@
 #Library imports
-from dijkstar import Graph, find_path
-import numpy as np
-import scipy as sp
-from scipy.optimize import minimize
+from dijkstar import Graph, find_path #type: ignore
+import numpy as np #type: ignore
+import scipy as sp #type: ignore
+from scipy.optimize import minimize #type: ignore
 
 #pylint: disable = import-error
 from bikinematicsolver.dtypes import Pos_Result
@@ -105,10 +105,10 @@ class Kinematic_Solver_Scipy_Min():
         """
         possible_links = []
         for link in self.links.values():   
-            if link.a.name == end_eff_point:
-                possible_links.append(self.kinematic_loop_points.index(link.b.name))
-            if link.b.name == end_eff_point:
-                possible_links.append(self.kinematic_loop_points.index(link.a.name))
+            if link.a == end_eff_point:
+                possible_links.append(self.kinematic_loop_points.index(link.b))
+            if link.b == end_eff_point:
+                possible_links.append(self.kinematic_loop_points.index(link.a))
         
         return min(possible_links)
 
@@ -288,3 +288,5 @@ class Kinematic_Solver_Scipy_Min():
         
         return v
 
+    def update_point_pos(self,point_name,new_pos):
+        self.points[point_name].pos = new_pos
