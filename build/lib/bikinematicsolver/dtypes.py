@@ -4,4 +4,4 @@ from collections import namedtuple
 Pos_Result = namedtuple('Pos_Result',['x','y'])
 #Geo data
 Point = namedtuple('Point',['name','type','pos'])
-Link = namedtuple('Link',['a','b','length'])
+Link = namedtuple('Link',['a','b'])

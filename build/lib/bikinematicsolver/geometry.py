@@ -1,5 +1,4 @@
-import numpy as np
-#pylint: disable = import-error
+import numpy as np #type: ignore
 from bikinematicsolver.dtypes import Pos_Result  
 
 def find_intersection(a1,a2,b1,b2):
