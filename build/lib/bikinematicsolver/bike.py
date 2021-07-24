@@ -298,17 +298,17 @@ class Bike():
                        
 
         #Populate solution
-        self.solution[sol_name]['Shock Length'] = Shock_Length
-        self.solution[sol_name]['Leverage Ratio'] = Leverage_Ratio
-        self.solution[sol_name]['Vertical Travel'] = Vertical_Travel
-        self.solution[sol_name]['Axle Path X'] = Axle_Path_X
-        self.solution[sol_name]['Instant Centre'] = Instant_Centre
+        self.solution[sol_name]['ShockLength'] = Shock_Length
+        self.solution[sol_name]['LeverageRatio'] = Leverage_Ratio
+        self.solution[sol_name]['VerticalTravel'] = Vertical_Travel
+        self.solution[sol_name]['AxlePathX'] = Axle_Path_X
+        self.solution[sol_name]['InstantCentre'] = Instant_Centre
         self.solution[sol_name]['IFC'] = IFC
         self.solution[sol_name]['CLINE_1'] = CLINE_1
         self.solution[sol_name]['CLINE_2'] = CLINE_2
         self.solution[sol_name]['AS_Point'] = AS_P
         self.solution[sol_name]['Tyre_Contact'] = Tyre_Contact
-        self.solution[sol_name]['Anti Squat Percent'] = AS_Percent
+        self.solution[sol_name]['AntiSquatPercent'] = AS_Percent
 
     def populate_static_point(self,sol,size,point_name):
         x = np.ones(size) * self.points[point_name].pos[0]
