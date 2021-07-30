@@ -32,7 +32,7 @@ class Bike():
         self.find_static_points()
         self.find_end_eff_points()
         teeth = (self.load_param('chainring_teeth'),
-                 self.load_param('cassette_teeth'))
+                 self.load_param('cassette_teeth')) #this really need cleaned urgently is so grim
         self.find_chainline(teeth)
            
         self.kinematic_solver = None #Added later in set_kinematic_solver
@@ -54,6 +54,13 @@ class Bike():
             ret = self.params[param_name]
         except:
             ret = 0
+        return ret
+
+    def _load_params(self,data): #so grim needs refactor ASAP as with all input
+        try:
+            ret = data['params']
+        except:
+            ret = {}
         return ret
 
     ##Functions to process input data

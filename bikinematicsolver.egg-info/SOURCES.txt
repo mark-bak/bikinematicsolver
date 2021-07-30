@@ -2,7 +2,6 @@ README.md
 setup.py
 bikinematicsolver/__init__.py
 bikinematicsolver/bike.Py
-bikinematicsolver/bike.py
 bikinematicsolver/dtypes.py
 bikinematicsolver/geometry.py
 bikinematicsolver/kinematic_solver_scipy_min.py
