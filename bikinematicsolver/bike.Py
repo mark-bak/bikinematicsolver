@@ -19,7 +19,7 @@ class Bike():
         self.points = {}
         self.links = {}
         self.shock = None
-        self.params = data['params']
+        self.params = self._load_params(data)
         self._parse_input_data(data)
 
         #Derived bike geo
