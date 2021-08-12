@@ -1,0 +1,1 @@
+from bikinematicsolver.kinematic_solver_scipy_min import Kinematic_Solver_Scipy_Min as ks

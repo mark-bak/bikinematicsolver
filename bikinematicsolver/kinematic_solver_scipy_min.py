@@ -5,19 +5,15 @@ import scipy as sp #type: ignore
 from scipy.optimize import minimize #type: ignore
 
 #pylint: disable = import-error
-from bikinematicsolver.dtypes import Pos_Result
+from bikinematicsolver.dtypes import Pos
 
 class Kinematic_Solver_Scipy_Min():
-    def __init__(self,points,links,kin_loop_points,end_eff_points):
+    def __init__(self,*args,**kwargs):
         """
         Copy over relevant variables from Bike representation
         """
-        self.points = points
-        self.links = links
-        self.kinematic_loop_points = kin_loop_points
-        self.end_eff_points = end_eff_points
 
-    def solve_suspension_motion(self,travel):
+    def solve_suspension_motion(self,travel,points,links,kin_loop_points,end_eff_points):
         """
         Solves the suspension motion for a desired travel.
         This is the one you want to run and it calls all the other functions as needed - probably a better stylistic way to represent this??
@@ -27,13 +23,13 @@ class Kinematic_Solver_Scipy_Min():
         """
 
         #Convert data into link space coordinates for solving
-        klp_off,klp_ss,eep_ss,eep_posn = self.get_solution_space_vectors()
+        klp_off,klp_ss,eep_ss,eep_posn = self.get_solution_space_vectors(points,kin_loop_points,end_eff_points,links)
         
         #Find the input angles in form [current input angle,......, angle required to acheive desired simulation travel] 
-        input_angles = self.find_input_angle_range(travel,klp_off,klp_ss,eep_ss,eep_posn)
+        input_angles = self.find_input_angle_range(travel,klp_off,klp_ss,eep_ss,eep_posn,points,end_eff_points,kin_loop_points)
         #print([input_angles[0],input_angles[-1]])
 
-        point_results= np.zeros(( len(self.kinematic_loop_points)+len(self.end_eff_points) , 2 , input_angles.shape[0])) #Result vector
+        point_results= np.zeros(( len(kin_loop_points)+len(end_eff_points) , 2 , input_angles.shape[0])) #Result vector
         
         for i in range(len(input_angles)): #Solve the linkage at each angle of the input link, and convert to cartesian (see note)
             klp_ss[0]=input_angles[i]
@@ -41,14 +37,14 @@ class Kinematic_Solver_Scipy_Min():
             point_results[:,:,i] = self.solution_to_cartesian(klp_off,klp_sol,eep_ss,eep_posn) # (this is probably slow in here - can move out later if performance issues)
 
         #Convert data to solution format
-        points_list = self.kinematic_loop_points + self.end_eff_points
+        points_list = kin_loop_points + end_eff_points
         solution = {}
         for i in range(point_results.shape[0]):
             name = points_list[i]
-            solution[name] = Pos_Result(point_results[i,0,:],point_results[i,1,:])
+            solution[name] = Pos(point_results[i,0,:],point_results[i,1,:])
         return solution
 
-    def get_solution_space_vectors(self):
+    def get_solution_space_vectors(self,points,kin_loop_points,end_eff_points,links):
         """
         Returns vectors in solution space form, ready for solving. This form is the following:
 
@@ -73,8 +69,8 @@ class Kinematic_Solver_Scipy_Min():
         with offset given by eep_ss[0] from linkage point self.kinematic_loop_points(eep_posn[0]) 
 
         """
-        klp = np.array([self.points[name].pos for name in self.kinematic_loop_points],dtype=float) #vector of points in form [[x1,y1],[x2,y2],...,[xn,yn]]
-        eep = np.array([self.points[name].pos for name in self.end_eff_points],dtype=float) #vector of points in form [[x1,y1],[x2,y2],...,[xn,yn]]
+        klp = np.array([points[name].pos for name in kin_loop_points],dtype=float) #vector of points in form [[x1,y1],[x2,y2],...,[xn,yn]]
+        eep = np.array([points[name].pos for name in end_eff_points],dtype=float) #vector of points in form [[x1,y1],[x2,y2],...,[xn,yn]]
 
         #Convert loop 
         klp_off = klp[0,:] 
@@ -84,9 +80,9 @@ class Kinematic_Solver_Scipy_Min():
         eep_posn=[]
         eep_ss =np.zeros(eep.shape[0]*2) # Converting (n x 2) [[x1,y1]...[xn,yn]] shape to [th1...thn,L1...Ln] (2n x 1) shape
 
-        for end_eff_index in range(len(self.end_eff_points)): #Loop through end eff points and find attachment point and offset            
+        for end_eff_index in range(len(end_eff_points)): #Loop through end eff points and find attachment point and offset            
             #Find attach point
-            attach_point_index = self.find_end_eff_attach_point(self.end_eff_points[end_eff_index])
+            attach_point_index = self.find_end_eff_attach_point(end_eff_points[end_eff_index],links,kin_loop_points)
             #Find offset from attach point to end effector
             Th,L = self.cartesian_to_link_space([klp[attach_point_index],eep[end_eff_index]])
             Th = klp_ss[attach_point_index] - Th #Find constant offset from link, orignal Th was theta from global x and non-constant!!!!!
@@ -98,17 +94,17 @@ class Kinematic_Solver_Scipy_Min():
 
         return klp_off,klp_ss,eep_ss,eep_posn
 
-    def find_end_eff_attach_point(self,end_eff_point):
+    def find_end_eff_attach_point(self,end_eff_point,links,kin_loop_points):
         """
         Returns index of linkage point attachment (via link) for given end_eff point. Finds first link in kinematic loop (lowest index) as 
         this follows for convention of link angle indexing later. Needs error checking written if no attachment at all.
         """
         possible_links = []
-        for link in self.links.values():   
+        for link in links.values():   
             if link.a == end_eff_point:
-                possible_links.append(self.kinematic_loop_points.index(link.b))
+                possible_links.append(kin_loop_points.index(link.b))
             if link.b == end_eff_point:
-                possible_links.append(self.kinematic_loop_points.index(link.a))
+                possible_links.append(kin_loop_points.index(link.a))
         
         return min(possible_links)
 
@@ -158,7 +154,7 @@ class Kinematic_Solver_Scipy_Min():
 
         return err
 
-    def find_input_angle_range(self,travel,klp_off,klp_ss,eep_ss,eep_posn):
+    def find_input_angle_range(self,travel,klp_off,klp_ss,eep_ss,eep_posn,points,end_eff_points,kin_loop_points):
         """
         Takes desired simulation travel and solution space vectors, and returns a range of input angles from [th0,...,tht], where th0 is the starting angle
         at zero suspension travel, and tht is the angle of the input link that gives the desired simulation travel. The number of angles in the 
@@ -168,15 +164,15 @@ class Kinematic_Solver_Scipy_Min():
         """
 
         #Find rear wheel initial vertical position
-        for name,point in self.points.items():
+        for name,point in points.items():
             if point.type == 'rear_wheel':
                 rear_wheel_name = name
                 rear_wheel_init_y = point.pos[1]
         
-        if rear_wheel_name in self.end_eff_points:
-            r_w_ind = self.end_eff_points.index(rear_wheel_name) + len(self.kinematic_loop_points) #List index of rear wheel point coordinates
-        if rear_wheel_name in self.kinematic_loop_points:
-            r_w_ind = self.kinematic_loop_points.index(rear_wheel_name)
+        if rear_wheel_name in end_eff_points:
+            r_w_ind = end_eff_points.index(rear_wheel_name) + len(kin_loop_points) #List index of rear wheel point coordinates
+        if rear_wheel_name in kin_loop_points:
+            r_w_ind = kin_loop_points.index(rear_wheel_name)
 
         #Setup up solver to find angle that minimises error between desired y position (at specified travel), and y position of rear wheel
         #found from linkage solver

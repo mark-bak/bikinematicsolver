@@ -1,5 +1,5 @@
 import numpy as np #type: ignore
-from bikinematicsolver.dtypes import Pos_Result  
+from bikinematicsolver.dtypes import Pos  
 
 def find_intersection(a1,a2,b1,b2):
     """
@@ -17,7 +17,7 @@ def find_intersection(a1,a2,b1,b2):
     x0 = np.subtract( c_b , c_a ) / np.subtract( m_a, m_b )
     y0 = np.add( m_b * x0  , c_b ) 
 
-    ic = Pos_Result(x0,y0)      
+    ic = Pos(x0,y0)      
     return ic
 
 def tangent_eqn(cen,r1,r2):
@@ -65,7 +65,7 @@ def find_circle_tangent_intersection(cen,tangent_line):
     x0 = -(line[0] * line[2]) / z + cen[0]
     y0 = -(line[1] * line[2] ) / z + cen[1]
 
-    ic = Pos_Result(x0,y0)
+    ic = Pos(x0,y0)
     return ic
 
 def find_upper_tangent_points(t_lines,cen1,cen2):
@@ -89,4 +89,4 @@ def find_upper_tangent_points(t_lines,cen1,cen2):
         ind = ind[0]
         return [p1[ind],p2[ind]]
     else:
-        return [Pos_Result(0,0),Pos_Result(0,0)]
+        return [Pos(0,0),Pos(0,0)]

@@ -3,18 +3,15 @@ import csv
 
 from dijkstar import Graph, find_path #type: ignore
 import numpy as np #type: ignore
-import scipy as sp #type: ignore
-from scipy.optimize import minimize #type: ignore
-from collections import namedtuple
 
 #Solver imports
 from bikinematicsolver.kinematic_solver_scipy_min import Kinematic_Solver_Scipy_Min
-from bikinematicsolver.dtypes import Pos_Result,Link,Point
+from bikinematicsolver.dtypes import Pos,Link,Point
 import bikinematicsolver.geometry as g
 
 class Bike():
     def __init__(self,data):
-        
+
         #Input bike geo
         self.points = {}
         self.links = {}
@@ -31,19 +28,14 @@ class Bike():
         self.find_kinematic_loop()
         self.find_static_points()
         self.find_end_eff_points()
-        teeth = (self.load_param('chainring_teeth'),
-                 self.load_param('cassette_teeth')) #this really need cleaned urgently is so grim
-        self.find_chainline(teeth)
+        self.find_chainline()
            
         self.kinematic_solver = None #Added later in set_kinematic_solver
 
         #Currently adds a solver that uses Scipy minimisation fcns to numerically solve
         #linkage constraint eqns, however more solvers will likely need to be created for
         #single pivots, and maybe a freudenstein eqn 4-bar solver could also be made
-        default_Solver = Kinematic_Solver_Scipy_Min(self.points,
-                                                    self.links,
-                                                    self.kinematic_loop_points,
-                                                    self.end_eff_points)
+        default_Solver = Kinematic_Solver_Scipy_Min
         self.set_kinematic_solver(default_Solver)
 
         #Output data
@@ -69,21 +61,17 @@ class Bike():
         This fcn takes input data, and populates the self.points{} and self.links{} dictionaries with point and
         link data represented as nametdtuples
         """  
+        if 'points' in data:
+            for point_name,point in data['points'].items():
+                self.points[point_name] = Point(**point)           
 
-        for point_name,point in data['points'].items():
-            self.points[point_name] = Point(**point)           
-
-        for link_name,link in data['links'].items():
-            L = Link(link['a'],link['b'])
-            if link_name == data['shock']:
-                self.shock = L
-            else:
-                self.links[link_name] = L
-
-    def update_point_pos(self,point_name,new_pos):
-        self.points[point_name].pos = new_pos
-        self.kinematic_solver.update_point_pos(point_name,new_pos)
-        pass
+        if 'links' in data:
+            for link_name,link in data['links'].items():
+                L = Link(link['a'],link['b'])
+                if link_name == data['shock']:
+                    self.shock = L
+                else:
+                    self.links[link_name] = L
 
     def find_kinematic_loop(self):
         """
@@ -110,7 +98,7 @@ class Bike():
                 if i !=j and i<j:
                     try:
                         path = find_path(g,grounds[i],grounds[j]) #Fnd shortest path betweeen these two grounds - almost 100% sure this always gives kin. path 
-                        path_list = path.nodes
+                        self.kinematic_loop_points  = path.nodes
                     except:
                         pass
         
@@ -124,8 +112,7 @@ class Bike():
                     print(path_list)
                 except:
                     pass
-
-        self.kinematic_loop_points = path_list
+        
         return path
 
     def find_static_points(self):
@@ -145,14 +132,16 @@ class Bike():
                                if not name in self.kinematic_loop_points 
                                and not name in self.static_points]
 
-    def find_chainline(self,teeth):
+    def find_chainline(self):
         """
         Populates the list of chainline cogs, with tuples of form (point_name,pitch_circ_dia), specifiying the center point and pcd of the cogs on chainline.
         Input teeth should be a tuple of form (teetg_chainring, teeth_idler, teeth_cassette) - where the idler pcd can be omitted if unused
         Output list is ordered from chainring - idler - rear cassette
         """
         #Calculate pcd from https://www.mathopenref.com/polygonradius.html
-        n = np.array(teeth,dtype = float)
+        if not 'teeth' in self.params:
+            return
+        n = np.array(self.params['teeth'],dtype = float)
         link_len = 12.7
         pitch_circle_dia = link_len / np.sin( np.pi / n  )
 
@@ -168,16 +157,28 @@ class Bike():
         """
         Adds the kinematic solver which can be used to calculate suspension motion
         """
-        self.kinematic_solver = Solver
+        self.kinematic_solver = Solver(
+            self.points,
+            self.links,
+            self.kinematic_loop_points,
+            self.end_eff_points)
 
     def get_suspension_motion(self,travel,name):
         """
         Runs the kinematic solver class attached to this instance, and returns the suspension motion
         throughout the specified travel in self.solution
         """
-        sol = self.kinematic_solver.solve_suspension_motion(travel)
-        self.solution[name] = sol
-        return sol
+        try:
+            sol = self.kinematic_solver.solve_suspension_motion(
+                travel,
+                self.points,
+                self.links,
+                self.kinematic_loop_points,
+                self.end_eff_points)
+
+            self.solution[name] = sol
+        except:
+            print('Unable to solve -> idk why, you probably dont have a functional linkage')
 
     def calculate_suspension_characteristics(self,sol_name):
         """
@@ -187,6 +188,10 @@ class Bike():
 
         pretty grim functon - needs a refactor tbh
         """
+        if not sol_name in self.solution:
+            print("no valid solution with that sol_name")
+            return
+
         sol = self.solution[sol_name]
         size = np.size(list(sol.values())[0].x) 
 
@@ -252,9 +257,9 @@ class Bike():
             #- ifc: intersection of chainline and 'effective swingarm' line between rw and instant centre
             for i in range(size): 
                 #grim processing, maybe need to optimizez datatypes a bit
-                out_pos = Pos_Result(sol[output_name].x[i],sol[output_name].y[i])
-                inp_pos = Pos_Result(sol[input_name].x[i],sol[input_name].y[i])
-                IC = Pos_Result(Instant_Centre.x[i],Instant_Centre.y[i])
+                out_pos = Pos(sol[output_name].x[i],sol[output_name].y[i])
+                inp_pos = Pos(sol[input_name].x[i],sol[input_name].y[i])
+                IC = Pos(Instant_Centre.x[i],Instant_Centre.y[i])
                 #find all possible lines tangent to the two circles
                 possible_clines = g.find_common_circle_tangent(inp_pos,
                                                         inp_rad,
@@ -274,13 +279,13 @@ class Bike():
                 IFC_y[i] = res.y           
 
             #Results in expected data format
-            IFC = Pos_Result(IFC_x,IFC_y)
-            CLINE_1 = Pos_Result(Cline1_x,Cline1_y)
-            CLINE_2 = Pos_Result(Cline2_x,Cline2_y)
+            IFC = Pos(IFC_x,IFC_y)
+            CLINE_1 = Pos(Cline1_x,Cline1_y)
+            CLINE_2 = Pos(Cline2_x,Cline2_y)
 
             #Find tyre contact and AS line
             wheel_rad = float(self.load_param('wheel_size')) * 25.4 * 0.5
-            Tyre_Contact = Pos_Result(sol[rw_name].x, sol[rw_name].y - np.ones(size) * wheel_rad)
+            Tyre_Contact = Pos(sol[rw_name].x, sol[rw_name].y - np.ones(size) * wheel_rad)
             fw_name = None # needs moved and tidied
             for name in self.points:
                 if self.points[name].type == 'front_wheel':
@@ -288,7 +293,7 @@ class Bike():
             AS_x = sol[fw_name].x
             AS_y = np.add( Tyre_Contact.y , (np.subtract(AS_x, Tyre_Contact.x) / np.subtract(IFC.x , Tyre_Contact.x)) * np.subtract(IFC.y,Tyre_Contact.y) )
 
-            AS_P = Pos_Result(AS_x,AS_y) 
+            AS_P = Pos(AS_x,AS_y) 
 
             ground_y = Tyre_Contact.y[0]
             h_cog = float(self.load_param('cog_height')) * np.ones(size)
@@ -320,13 +325,13 @@ class Bike():
     def populate_static_point(self,sol,size,point_name):
         x = np.ones(size) * self.points[point_name].pos[0]
         y = np.ones(size) * self.points[point_name].pos[1]
-        return Pos_Result(x,y)
+        return Pos(x,y)
 
     def offset_to_zero(self,sol,size,point_name):
         #Normalised  path
         y = sol[point_name].y - np.ones(size) * sol[point_name].y[0] # s - I*s[0]
         x = sol[point_name].x - np.ones(size)  * sol[point_name].x[0]
-        return Pos_Result(x,y)
+        return Pos(x,y)
 
     def calc_distance(self,a,b):
         dx = np.subtract(a.x , b.x)
@@ -357,7 +362,7 @@ class Bike():
             writer = csv.writer(f, delimiter=',',
             quotechar='|', quoting=csv.QUOTE_MINIMAL)
             for point_name in self.solution[solution_name]:
-                if isinstance(self.solution[solution_name][point_name],Pos_Result):
+                if isinstance(self.solution[solution_name][point_name],Pos):
                     writer.writerow([point_name+'_x']+list(self.solution[solution_name][point_name].x))
                     writer.writerow([point_name+'_y']+list(self.solution[solution_name][point_name].y))
                 else:
