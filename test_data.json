@@ -117,9 +117,8 @@
     },
     "shock": "Shock Eye-Eye",
     "params": {
+        "teeth": [30,40,52],
         "wheelbase": "1255",
-        "chainring_teeth": "30",
-        "cassette_teeth": "52",
         "wheel_size": "29",
         "window_width": 1920,
         "window_height": 1017,

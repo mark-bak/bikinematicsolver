@@ -17,4 +17,6 @@ def test_params():
         b.get_suspension_motion(travel,'test')
         b.calculate_suspension_characteristics('test')
         assert isinstance(b.solution['test']['LeverageRatio'],numpy.ndarray)
+        print(b.solution['test']['AntiSquatPercent'])
+        print(b.solution['test']['LeverageRatio'])
 
