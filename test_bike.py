@@ -15,6 +15,7 @@ def test_params():
         b = Bike(data)
         travel = 200
         b.get_suspension_motion(travel,'test')
+        assert isinstance(b.solution['test']['Upper_Pivot'].x,numpy.ndarray)
         b.calculate_suspension_characteristics('test')
         assert isinstance(b.solution['test']['LeverageRatio'],numpy.ndarray)
         print(b.solution['test']['AntiSquatPercent'])
