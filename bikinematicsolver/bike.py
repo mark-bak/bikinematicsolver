@@ -162,23 +162,28 @@ class Bike():
         Output list is ordered from chainring - idler - rear cassette
         """
         #Calculate pcd from https://www.mathopenref.com/polygonradius.html
+
         has_idler = False
         for point in self.points.values():
             if point.type == 'idler':
                 has_idler = True
 
-        n = np.array([self.load_param['chainring_teeth'],self.load_param['cassette_teeth'],self.load_param['idler_teeth']],dtype = float)
+        if has_idler:
+            n = np.array([self.get_param('idler_teeth'),self.get_param('cassette_teeth')],dtype = float)
+        else:
+            n = np.array([self.get_param('chainring_teeth'),self.get_param('cassette_teeth')],dtype = float)
+
         link_len = 12.7
         pitch_circle_dia = link_len / np.sin( np.pi / n  )
 
         for point in self.points.values():
             if point.type == 'bottom_bracket' and not has_idler:
                 self.chainline.insert(0,(point.name,pitch_circle_dia[0]))
+            if point.type == 'idler':
+                self.chainline.insert(0,(point.name,pitch_circle_dia[0])) #one idler only for now - if some crazy person makes bike with two idlers this will need fixed 
             if point.type == 'rear_wheel':
                 self.chainline.insert(1,(point.name,pitch_circle_dia[-1]))
-            if point.type == 'idler':
-                self.chainline.insert(0,(point.name,pitch_circle_dia[1])) #one idler only for now - if some crazy person makes bike with two idlers this will need fixed  
-
+ 
     ##-- Solution functions
     def get_suspension_motion(self,travel,name):
         """
