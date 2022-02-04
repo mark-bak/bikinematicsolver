@@ -18,6 +18,7 @@ def test_params():
         assert isinstance(b.solution['test']['Upper_Pivot'].x,numpy.ndarray)
         b.calculate_suspension_characteristics('test')
         assert isinstance(b.solution['test']['LeverageRatio'],numpy.ndarray)
-        print(b.solution['test']['AntiSquatPercent'])
+
         print(b.solution['test']['LeverageRatio'])
+        print(b.solution['test']['AntiSquatPercent'])
 

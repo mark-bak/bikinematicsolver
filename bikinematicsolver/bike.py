@@ -14,7 +14,7 @@ class Bike():
     # GENERAL SPEEDUP IDEAS maybe to be implemented
     # - don't parse input data, just leave as json??
 
-    def __init__(self,data,n_solver_steps = 100):
+    def __init__(self, data, n_solver_steps = 100,Solver = Kinematic_Solver_Scipy_Min):
 
         #Input bike geo
         self.points = {}
@@ -36,12 +36,8 @@ class Bike():
         self.find_chainline()
 
         #Solver setup   
-        self.kinematic_solver = None #Added later in set_kinematic_solver
-        #Currently adds a solver that uses Scipy minimisation fcns to numerically solve
-        #linkage constraint eqns, however more solvers will likely need to be created for
-        #single pivots, and maybe a freudenstein eqn 4-bar solver could also be made (i.e this code heere is sorta temporary)
-        default_Solver = Kinematic_Solver_Scipy_Min
-        self.set_kinematic_solver(default_Solver,n_solver_steps)
+        self.kinematic_solver = Solver(n_solver_steps)
+
 
         #Output data
         self.solution = {}
@@ -168,13 +164,12 @@ class Bike():
             if point.type == 'idler':
                 has_idler = True
 
-        if has_idler:
-            n = np.array([self.get_param('idler_teeth'),self.get_param('cassette_teeth')],dtype = float)
-        else:
-            n = np.array([self.get_param('chainring_teeth'),self.get_param('cassette_teeth')],dtype = float)
+        chainline_teeth = self.get_param('chainline')
+        if chainline_teeth == 0:
+            return 
 
         link_len = 12.7
-        pitch_circle_dia = link_len / np.sin( np.pi / n  )
+        pitch_circle_dia = link_len / np.sin( np.pi / np.array(chainline_teeth)  )
 
         for point in self.points.values():
             if point.type == 'bottom_bracket' and not has_idler:

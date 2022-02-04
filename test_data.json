@@ -117,31 +117,9 @@
     },
     "shock": "Shock Eye-Eye",
     "params": {
-        "teeth": [30,40,52],
+        "chainline": [30,52],
         "wheelbase": "1255",
         "wheel_size": "29",
-        "window_width": 1920,
-        "window_height": 1017,
-        "image_file": "C:\\Users\\Mark\\Documents\\Important\\Programming\\BiKinematics\\ImageFiles\\Example_VitusSommet.jpg",
-        "point_colour": [
-            0.8875,
-            1,
-            0.09999999999999998,
-            1
-        ],
-        "link_colour": [
-            1,
-            0.09999999999999998,
-            0.09999999999999998,
-            1
-        ],
-        "shock_colour": [
-            0.30000000000000004,
-            1,
-            1,
-            1
-        ],
-        "p2mm": 1.3379530916844349,
         "cog_height": "1100"
     }
 }
