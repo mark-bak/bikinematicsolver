@@ -6,8 +6,6 @@ to use:
 
 go look at the test_bike.py thats pretty much all it does
 
-get from pypi
+get from pypi:
 
-'''
-pip install bikinematics
-'''
+`pip install bikinematics`
